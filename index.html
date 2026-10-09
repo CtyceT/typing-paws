@@ -1,0 +1,1127 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>喵喵打字大冒險 Typing Paws</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #fff4e8;
+    --card: #ffffff;
+    --ink: #4a3550;
+    --ink-soft: #8a7590;
+    --pink: #ff8fab;
+    --pink-deep: #f05d86;
+    --mint: #6fd6b0;
+    --mint-deep: #34b98a;
+    --yellow: #ffd166;
+    --purple: #b79ced;
+    --sky: #8ecdf6;
+    --red: #ff6b6b;
+    --line: 3px solid var(--ink);
+    --pop: 4px 4px 0 var(--ink);
+    --radius: 22px;
+    --font: "Fredoka", "PingFang TC", "Microsoft JhengHei", "Noto Sans TC", system-ui, sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    min-height: 100vh;
+    font-family: var(--font);
+    color: var(--ink);
+    background-color: var(--bg);
+    background-image: radial-gradient(#ffd9c2 1.6px, transparent 1.6px);
+    background-size: 22px 22px;
+    overflow-x: hidden;
+  }
+  button { font-family: inherit; color: inherit; cursor: pointer; }
+  #app { max-width: 920px; margin: 0 auto; padding: 20px 16px 40px; }
+
+  .screen { display: none; animation: fadeIn .35s ease; }
+  .screen.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+  .card {
+    background: var(--card);
+    border: var(--line);
+    border-radius: var(--radius);
+    box-shadow: var(--pop);
+    padding: 18px 20px;
+  }
+  .btn {
+    border: var(--line);
+    border-radius: 999px;
+    box-shadow: var(--pop);
+    background: var(--yellow);
+    font-weight: 600;
+    font-size: 1.05rem;
+    padding: 10px 22px;
+    transition: transform .08s, box-shadow .08s;
+  }
+  .btn:hover { transform: translate(-1px, -1px); box-shadow: 5px 5px 0 var(--ink); }
+  .btn:active { transform: translate(3px, 3px); box-shadow: 1px 1px 0 var(--ink); }
+  .btn.ghost { background: #fff; }
+  .btn.small { font-size: .9rem; padding: 6px 14px; box-shadow: 3px 3px 0 var(--ink); }
+
+  /* ---------- Start screen ---------- */
+  .hero { text-align: center; margin: 10px 0 24px; }
+  .hero .mascot { font-size: 84px; display: inline-block; animation: bob 1.6s ease-in-out infinite; }
+  .hero h1 { margin: 6px 0 4px; font-size: clamp(2rem, 6vw, 3.2rem); line-height: 1.1; letter-spacing: .5px; }
+  .hero h1 span { color: var(--pink-deep); }
+  .hero p { margin: 0; color: var(--ink-soft); font-size: 1.05rem; }
+  @keyframes bob { 0%,100% { transform: translateY(0) rotate(-3deg); } 50% { transform: translateY(-10px) rotate(3deg); } }
+
+  .section-title { font-size: 1.2rem; font-weight: 700; margin: 26px 0 12px; }
+  .diff-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .diff-card {
+    text-align: left;
+    border: var(--line); border-radius: var(--radius); box-shadow: var(--pop);
+    padding: 16px; transition: transform .1s, box-shadow .1s;
+  }
+  .diff-card:hover { transform: translate(-2px, -3px) rotate(-1deg); box-shadow: 6px 7px 0 var(--ink); }
+  .diff-card:active { transform: translate(3px, 3px); box-shadow: 1px 1px 0 var(--ink); }
+  .diff-card[data-diff="easy"] { background: #d9f7ea; }
+  .diff-card[data-diff="normal"] { background: #fff0c4; }
+  .diff-card[data-diff="hard"] { background: #ffd9e3; }
+  .diff-card .icon { font-size: 34px; }
+  .diff-card .name { font-size: 1.35rem; font-weight: 700; margin: 4px 0 2px; }
+  .diff-card .desc { font-size: .9rem; color: var(--ink-soft); min-height: 2.6em; }
+  .diff-card .best { margin-top: 10px; font-size: .85rem; background: rgba(255,255,255,.75); border-radius: 12px; padding: 6px 10px; font-weight: 500; }
+
+  .how-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  .how { text-align: center; padding: 14px 10px; }
+  .how .e { font-size: 30px; }
+  .how b { display: block; margin: 4px 0 2px; }
+  .how small { color: var(--ink-soft); font-size: .82rem; line-height: 1.35; display: block; }
+
+  .history-wrap { display: grid; grid-template-columns: 1.1fr 1fr; gap: 16px; align-items: stretch; }
+  .spark-box svg { width: 100%; height: 130px; display: block; }
+  .spark-label { font-size: .85rem; color: var(--ink-soft); margin-bottom: 6px; display: flex; justify-content: space-between; }
+  table.hist { width: 100%; border-collapse: collapse; font-size: .9rem; }
+  table.hist th, table.hist td { padding: 5px 4px; text-align: left; border-bottom: 2px dashed #f1e1d6; }
+  table.hist th { color: var(--ink-soft); font-weight: 500; }
+  .empty { color: var(--ink-soft); text-align: center; padding: 30px 0; }
+  .tag { display: inline-block; padding: 1px 8px; border-radius: 999px; border: 2px solid var(--ink); font-size: .75rem; font-weight: 600; }
+  .tag.easy { background: #d9f7ea; } .tag.normal { background: #fff0c4; } .tag.hard { background: #ffd9e3; }
+  .row-end { display: flex; justify-content: flex-end; margin-top: 10px; }
+
+  /* ---------- Battle screen ---------- */
+  .topbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+  .stage-pill { background: var(--purple); border: var(--line); border-radius: 999px; padding: 6px 16px; font-weight: 700; box-shadow: 3px 3px 0 var(--ink); }
+  .top-stats { display: flex; gap: 8px; flex-wrap: wrap; }
+  .chip { background: #fff; border: var(--line); border-radius: 14px; padding: 4px 12px; font-weight: 600; font-size: .95rem; box-shadow: 3px 3px 0 var(--ink); }
+  .chip small { color: var(--ink-soft); font-weight: 500; margin-right: 4px; }
+
+  .arena {
+    position: relative;
+    display: grid; grid-template-columns: 1fr auto 1fr; align-items: end; gap: 10px;
+    background: linear-gradient(#cdeeff 0%, #e9f8ff 58%, #bfe8a6 58%, #a8dc8c 100%);
+    border: var(--line); border-radius: var(--radius); box-shadow: var(--pop);
+    padding: 20px 22px 18px; min-height: 270px; overflow: hidden;
+  }
+  .arena.shake { animation: screenShake .35s; }
+  @keyframes screenShake {
+    0%,100% { transform: translate(0,0); } 20% { transform: translate(-6px, 3px); } 40% { transform: translate(6px,-3px); }
+    60% { transform: translate(-4px, 2px); } 80% { transform: translate(4px,-1px); }
+  }
+  .cloud { position: absolute; font-size: 38px; opacity: .85; animation: drift 18s linear infinite; pointer-events: none; }
+  @keyframes drift { from { transform: translateX(-60px); } to { transform: translateX(980px); } }
+
+  .fighter { text-align: center; position: relative; z-index: 1; }
+  .fighter .info { background: rgba(255,255,255,.92); border: var(--line); border-radius: 16px; padding: 8px 10px; margin-bottom: 10px; text-align: left; }
+  .fighter .fname { font-weight: 700; font-size: 1rem; display: flex; justify-content: space-between; gap: 6px; }
+  .fighter .fname span:last-child { font-family: var(--mono); font-size: .85rem; color: var(--ink-soft); }
+  .bar { height: 14px; border: 2.5px solid var(--ink); border-radius: 999px; background: #f4e8ee; overflow: hidden; margin-top: 5px; }
+  .bar > i { display: block; height: 100%; width: 100%; border-radius: 999px; transition: width .25s ease; }
+  .bar.hp-player > i { background: var(--mint); }
+  .bar.hp-enemy > i { background: var(--pink); }
+  .bar.charge { height: 10px; margin-top: 6px; }
+  .bar.charge > i { background: var(--yellow); transition: none; }
+  .bar.charge.danger > i { background: var(--red); }
+  .charge-label { font-size: .75rem; color: var(--ink-soft); margin-top: 3px; display: flex; justify-content: space-between; }
+  .sprite { font-size: clamp(64px, 12vw, 104px); line-height: 1; display: inline-block; filter: drop-shadow(0 6px 0 rgba(74,53,80,.18)); }
+  .sprite.idle { animation: bob 1.4s ease-in-out infinite; }
+  .sprite.enemy.idle { animation: bobEnemy 1.2s ease-in-out infinite; }
+  .sprite.flip { transform: scaleX(-1); }
+  @keyframes bobEnemy { 0%,100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-6px) scale(1.04, .97); } }
+  .sprite.hit { animation: hit .4s ease; }
+  @keyframes hit { 0% { transform: translateX(0); filter: brightness(1); } 25% { transform: translateX(14px) rotate(8deg); filter: brightness(2.2); }
+    50% { transform: translateX(-8px) rotate(-5deg); } 100% { transform: translateX(0); filter: brightness(1); } }
+  .sprite.attack-r { animation: lungeR .35s ease; }
+  .sprite.attack-l { animation: lungeL .4s ease; }
+  @keyframes lungeR { 0%,100% { transform: translateX(0); } 45% { transform: translateX(60px) scale(1.15); } }
+  @keyframes lungeL { 0%,100% { transform: translateX(0); } 45% { transform: translateX(-70px) scale(1.2); } }
+  .sprite.ko { animation: ko .8s ease forwards; }
+  @keyframes ko { to { transform: rotate(160deg) translateY(30px) scale(.4); opacity: 0; } }
+
+  .vs { align-self: center; text-align: center; z-index: 1; min-width: 110px; }
+  .combo-num { font-size: 2.6rem; font-weight: 700; line-height: 1; color: var(--ink); -webkit-text-stroke: 0; }
+  .combo-num.bump { animation: bump .18s ease; }
+  @keyframes bump { 50% { transform: scale(1.3); } }
+  .combo-label { font-weight: 600; font-size: .9rem; color: var(--ink-soft); }
+  .mult { display: inline-block; margin-top: 6px; background: #fff; border: var(--line); border-radius: 999px; padding: 2px 10px; font-weight: 700; }
+  .mult.hot { background: var(--yellow); }
+  .mult.fire { background: var(--pink); color: #fff; }
+
+  .float {
+    position: absolute; font-weight: 700; pointer-events: none; z-index: 5;
+    font-size: 1.7rem; color: #fff;
+    text-shadow: -2px -2px 0 var(--ink), 2px -2px 0 var(--ink), -2px 2px 0 var(--ink), 2px 2px 0 var(--ink);
+    animation: floatUp 1s ease-out forwards;
+  }
+  .float.crit { color: var(--yellow); font-size: 2.2rem; }
+  .float.ouch { color: var(--red); }
+  @keyframes floatUp { 0% { transform: translate(-50%, 0) scale(.6); opacity: 0; } 15% { transform: translate(-50%, -10px) scale(1.15); opacity: 1; }
+    100% { transform: translate(-50%, -80px) scale(1); opacity: 0; } }
+  .particle { position: absolute; pointer-events: none; z-index: 4; font-size: 20px; animation: burst .8s ease-out forwards; }
+  @keyframes burst { from { transform: translate(0,0) scale(1); opacity: 1; } to { transform: translate(var(--dx), var(--dy)) scale(.3) rotate(200deg); opacity: 0; } }
+
+  .word-panel { margin-top: 16px; text-align: center; padding: 18px 16px 16px; cursor: text; }
+  .word-hint { font-size: .85rem; color: var(--ink-soft); margin-bottom: 8px; }
+  .word {
+    font-family: var(--mono); font-weight: 700; font-size: clamp(1.7rem, 5.6vw, 2.8rem);
+    letter-spacing: 1px; min-height: 1.4em; word-break: break-all;
+  }
+  .word.shake { animation: wordShake .3s; }
+  @keyframes wordShake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-8px); } 75% { transform: translateX(8px); } }
+  .ch { display: inline-block; padding: 0 1px; border-bottom: 4px solid transparent; transition: color .08s; }
+  .ch.done { color: var(--mint-deep); }
+  .ch.todo { color: #c4b6c8; }
+  .ch.cur { color: var(--ink); border-bottom-color: var(--pink); animation: blink 1s steps(2) infinite; }
+  .ch.err { color: var(--red) !important; border-bottom-color: var(--red); }
+  .ch.space { min-width: .6em; }
+  .ch.space.todo::before, .ch.space.cur::before { content: "·"; }
+  @keyframes blink { 50% { border-bottom-color: transparent; } }
+  .next-words { margin-top: 10px; display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
+  .next-words span { font-family: var(--mono); font-size: .95rem; background: #f8f0f6; border: 2px dashed #d9c7dd; border-radius: 10px; padding: 2px 10px; color: var(--ink-soft); }
+  .focus-warn { margin-top: 10px; font-size: .85rem; color: var(--pink-deep); font-weight: 600; display: none; }
+  .focus-warn.show { display: block; }
+  #hiddenInput { position: absolute; opacity: 0; width: 1px; height: 1px; left: -100px; top: 0; }
+
+  /* overlays */
+  .overlay {
+    position: fixed; inset: 0; background: rgba(74,53,80,.45);
+    display: none; align-items: center; justify-content: center; z-index: 50; padding: 16px;
+  }
+  .overlay.show { display: flex; }
+  .overlay .card { text-align: center; max-width: 420px; width: 100%; animation: popIn .3s cubic-bezier(.3,1.6,.6,1); }
+  @keyframes popIn { from { transform: scale(.6); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  .big-count { font-size: 6rem; font-weight: 700; color: #fff; text-shadow: 5px 5px 0 var(--ink); animation: popIn .5s cubic-bezier(.3,1.6,.6,1); }
+  .overlay .card h2 { margin: 6px 0; font-size: 1.8rem; }
+  .overlay .card p { color: var(--ink-soft); margin: 4px 0 14px; }
+  .btn-row { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+
+  /* ---------- Result screen ---------- */
+  .result { text-align: center; padding: 26px 22px; }
+  .result .big-emoji { font-size: 80px; display: inline-block; animation: bob 1.6s ease-in-out infinite; }
+  .result h2 { font-size: 2.2rem; margin: 6px 0 2px; }
+  .stars { font-size: 2.6rem; letter-spacing: 6px; margin: 6px 0; }
+  .stars .off { filter: grayscale(1); opacity: .3; }
+  .stars span { display: inline-block; animation: popIn .4s backwards; }
+  .new-record { display: inline-block; background: var(--pink); color: #fff; border: var(--line); border-radius: 999px; padding: 4px 16px; font-weight: 700; margin: 6px 0; transform: rotate(-3deg); box-shadow: 3px 3px 0 var(--ink); }
+  .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 18px 0; }
+  .stat { background: #fdf6fa; border: var(--line); border-radius: 16px; padding: 12px 6px; }
+  .stat .v { font-size: 1.7rem; font-weight: 700; }
+  .stat .k { font-size: .85rem; color: var(--ink-soft); }
+  .comment { background: #fff8de; border: 2px dashed #e6c86a; border-radius: 14px; padding: 10px 14px; margin: 0 auto 18px; max-width: 520px; }
+
+  /* ---------- SVG avatars ---------- */
+  svg.av { display: block; overflow: visible; }
+  .sprite svg.av { width: clamp(92px, 15vw, 136px); height: auto; }
+  .av .f-happy, .av .f-hurt, .av .f-ko { display: none; }
+  .sprite.attack-r .av .f-normal, .av.happy .f-normal, .av-card:hover .av .f-normal { display: none; }
+  .sprite.attack-r .av .f-happy, .av.happy .f-happy, .av-card:hover .av .f-happy { display: inline; }
+  .sprite.hit .av .f-normal, .av.sad .f-normal { display: none; }
+  .sprite.hit .av .f-hurt, .av.sad .f-hurt { display: inline; }
+  .sprite.ko .av .f-normal { display: none; }
+  .sprite.ko .av .f-ko { display: inline; }
+  .sprite.enemy.boss { font-size: clamp(84px, 15vw, 132px); }
+  .hero .mascot svg.av { width: 120px; height: auto; margin: 0 auto; }
+  .result .big-emoji svg.av { width: 120px; height: auto; }
+
+  .avatar-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+  .av-card {
+    background: #fff; border: var(--line); border-radius: var(--radius); box-shadow: var(--pop);
+    padding: 12px 8px 10px; text-align: center; position: relative; transition: transform .1s, box-shadow .1s, background .15s;
+  }
+  .av-card svg.av { width: 82px; height: auto; margin: 0 auto; }
+  .av-card .nm { font-weight: 700; margin-top: 4px; }
+  .av-card .sub { font-size: .78rem; color: var(--ink-soft); }
+  .av-card:hover { transform: translateY(-3px); }
+  .av-card.selected { background: #fff0c4; }
+  .av-card.selected::after {
+    content: "✓"; position: absolute; top: -10px; right: -8px; width: 28px; height: 28px; line-height: 23px;
+    background: var(--mint); border: var(--line); border-radius: 50%; font-weight: 700;
+  }
+
+  .ime-warn {
+    display: none; margin: 12px auto 0; max-width: 560px; background: #fff0c4; border: 2px dashed #e0a800;
+    border-radius: 14px; padding: 8px 12px; font-weight: 600; font-size: .92rem;
+  }
+  .ime-warn.show { display: block; animation: popIn .25s; }
+  kbd { font-family: var(--mono); background: #fff; border: 2px solid var(--ink); border-bottom-width: 3px; border-radius: 6px; padding: 0 6px; font-size: .85em; }
+
+  footer { text-align: center; margin-top: 30px; color: var(--ink-soft); font-size: .85rem; }
+
+  @media (max-width: 720px) {
+    .diff-grid { grid-template-columns: 1fr; }
+    .avatar-grid { grid-template-columns: repeat(2, 1fr); }
+    .how-grid { grid-template-columns: repeat(2, 1fr); }
+    .history-wrap { grid-template-columns: 1fr; }
+    .arena { grid-template-columns: 1fr 1fr; padding: 14px; }
+    .vs { grid-column: 1 / -1; grid-row: 1; display: flex; align-items: center; justify-content: center; gap: 10px; min-width: 0; }
+    .vs .mult { margin-top: 0; }
+    .combo-num { font-size: 1.8rem; }
+    .stat-grid { grid-template-columns: repeat(2, 1fr); }
+    .topbar { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
+    .top-stats { grid-column: 1 / -1; grid-row: 2; display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+    .chip { padding: 3px 4px; font-size: .85rem; text-align: center; box-shadow: 2px 2px 0 var(--ink); }
+    .chip small { display: block; margin: 0; font-size: .7rem; }
+    .stage-pill { font-size: .9rem; padding: 5px 12px; }
+    .fighter .fname { flex-direction: column; gap: 0; }
+    .word-hint { font-size: .78rem; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ================= START ================= -->
+  <section class="screen active" id="screen-start">
+    <div class="hero">
+      <div class="mascot" id="heroMascot"></div>
+      <h1>喵喵打字<span>大冒險</span></h1>
+      <p>Typing Paws — 用你的打字速度，打倒擋路的程式怪獸！</p>
+    </div>
+
+    <div class="section-title">🐾 選擇你的勇者</div>
+    <div class="avatar-grid" id="avatarGrid"></div>
+
+    <div class="section-title">🎮 選擇難度開始戰鬥</div>
+    <div class="diff-grid" id="diffGrid"></div>
+
+    <div class="section-title">📖 玩法說明</div>
+    <div class="how-grid">
+      <div class="card how"><div class="e">⌨️</div><b>打字＝攻擊</b><small>打完一個單字就會對怪物造成傷害，字越長越痛</small></div>
+      <div class="card how"><div class="e">🔥</div><b>連擊加成</b><small>連續打對累積 Combo，每 10 下傷害倍率 +0.5（最高 ×3）</small></div>
+      <div class="card how"><div class="e">⏳</div><b>小心反擊</b><small>怪物的黃色蓄力條滿了就會攻擊你；打錯字會讓它蓄力更快</small></div>
+      <div class="card how"><div class="e">🏆</div><b>三關闖關</b><small>打倒 3 隻怪物就通關，成績與最佳紀錄會自動保存</small></div>
+    </div>
+
+    <div class="section-title">📈 我的戰績</div>
+    <div class="history-wrap">
+      <div class="card spark-box">
+        <div class="spark-label"><span>最近 10 場 WPM 走勢</span><span id="sparkMeta"></span></div>
+        <div id="spark"></div>
+      </div>
+      <div class="card">
+        <div id="histTable"></div>
+        <div class="row-end"><button class="btn small ghost" id="clearBtn">🧹 清除紀錄</button></div>
+      </div>
+    </div>
+    <footer>小提示：戰鬥中按 <b>Esc</b> 可以暫停 ・ 紀錄只存在你自己的瀏覽器</footer>
+  </section>
+
+  <!-- ================= BATTLE ================= -->
+  <section class="screen" id="screen-battle">
+    <div class="topbar">
+      <div class="stage-pill" id="stagePill">第 1 / 3 關</div>
+      <div class="top-stats">
+        <div class="chip"><small>時間</small><span id="tTime">0.0s</span></div>
+        <div class="chip"><small>WPM</small><span id="tWpm">0</span></div>
+        <div class="chip"><small>準確率</small><span id="tAcc">100%</span></div>
+        <div class="chip"><small>分數</small><span id="tScore">0</span></div>
+      </div>
+      <button class="btn small ghost" id="pauseBtn">⏸ 暫停</button>
+    </div>
+
+    <div class="arena" id="arena">
+      <div class="cloud" style="top:14px; animation-delay:-4s">☁️</div>
+      <div class="cloud" style="top:56px; animation-delay:-12s; font-size:28px">☁️</div>
+
+      <div class="fighter" id="playerSide">
+        <div class="info">
+          <div class="fname"><span id="pName">🐾 喵喵勇者</span><span id="pHpTxt">100/100</span></div>
+          <div class="bar hp-player"><i id="pHp"></i></div>
+        </div>
+        <div class="sprite player idle" id="pSprite"></div>
+      </div>
+
+      <div class="vs">
+        <div><div class="combo-num" id="comboNum">0</div><div class="combo-label">COMBO</div></div>
+        <div class="mult" id="multTag">×1.0</div>
+      </div>
+
+      <div class="fighter" id="enemySide">
+        <div class="info">
+          <div class="fname"><span id="eName">小 Bug 蟲</span><span id="eHpTxt">60/60</span></div>
+          <div class="bar hp-enemy"><i id="eHp"></i></div>
+          <div class="bar charge" id="chargeBar"><i id="eCharge" style="width:0%"></i></div>
+          <div class="charge-label"><span>⚡ 攻擊蓄力</span><span id="chargeTxt">0%</span></div>
+        </div>
+        <div class="sprite enemy idle" id="eSprite">🐛</div>
+      </div>
+    </div>
+
+    <div class="card word-panel" id="wordPanel">
+      <div class="word-hint">輸入下面的字來攻擊！（大小寫、空白與標點都要正確）</div>
+      <div class="word" id="word"></div>
+      <div class="next-words" id="nextWords"></div>
+      <div class="focus-warn" id="focusWarn">👆 點一下這裡繼續打字</div>
+      <div class="ime-warn" id="imeWarn"></div>
+      <!-- type=password：瀏覽器在密碼欄位會關閉中文輸入法，避免注音/拼音吃掉按鍵 -->
+      <input id="hiddenInput" type="password" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"
+             data-lpignore="true" data-1p-ignore aria-label="打字輸入">
+    </div>
+  </section>
+
+  <!-- ================= RESULT ================= -->
+  <section class="screen" id="screen-result">
+    <div class="card result">
+      <div class="big-emoji" id="rEmoji">🏆</div>
+      <h2 id="rTitle">通關成功！</h2>
+      <div id="rSub" style="color:var(--ink-soft)"></div>
+      <div class="stars" id="rStars"></div>
+      <div id="rRecord"></div>
+      <div class="stat-grid" id="rStats"></div>
+      <div class="comment" id="rComment"></div>
+      <div class="btn-row">
+        <button class="btn" id="retryBtn">🔁 再挑戰一次</button>
+        <button class="btn ghost" id="menuBtn">🏠 回到選單</button>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- overlays -->
+<div class="overlay" id="countOverlay"><div class="big-count" id="countText">3</div></div>
+<div class="overlay" id="msgOverlay">
+  <div class="card">
+    <div style="font-size:56px" id="msgEmoji">⏸</div>
+    <h2 id="msgTitle">暫停中</h2>
+    <p id="msgText">喘口氣，準備好再繼續！</p>
+    <div class="btn-row" id="msgBtns"></div>
+  </div>
+</div>
+
+<script>
+(() => {
+  "use strict";
+
+  // ============ 資料設定 ============
+  const WORDS = {
+    easy: ["cat","dog","sun","moon","star","cake","milk","fish","bird","tree","rain","snow","blue","pink","jump",
+      "play","sing","nap","cup","hat","box","toy","egg","pie","bee","fox","owl","map","key","bus","red","joy",
+      "hug","paw","fun","kite","leaf","wind","frog","duck","bear","rice","tea","home","soft","cozy"],
+    normal: ["banana","rabbit","purple","coffee","window","garden","rocket","planet","castle","dragon","cookie",
+      "muffin","island","bubble","candle","pirate","wizard","jungle","orange","pencil","monkey","laptop","puzzle",
+      "summer","winter","flower","button","kitten","travel","battle","shadow","silver","yellow","sunset","cheese",
+      "dinosaur","keyboard","rainbow","picnic","penguin","cupcake","balloon"],
+    hard: ["fluffy kitten","Hello, World!","debug the code","midnight snack","keyboard warrior","strawberry",
+      "adventure","programming","Thank you!","pineapple pizza","rainbow unicorn","deadline is near","commit & push",
+      "coffee overflow","404 not found","semicolon;","JavaScript","GitHub Pages","vibe coding","Taipei 101",
+      "bubble tea","night market","typing master","Ctrl + C","spaghetti code","happy hacking","quantum cat",
+      "marshmallow","butterfly effect","Monday morning","sunflower seeds","It works!"]
+  };
+
+  const DIFF = {
+    easy:   { label: "簡單", icon: "🌱", desc: "3～5 字母短單字，怪物攻擊慢慢來", interval: 7000, enemyDmg: 8,  hpScale: 1.0 },
+    normal: { label: "普通", icon: "🌟", desc: "5～8 字母單字，節奏剛剛好",       interval: 5200, enemyDmg: 12, hpScale: 1.6 },
+    hard:   { label: "困難", icon: "🔥", desc: "片語＋大小寫＋標點，怪物出手很快", interval: 4400, enemyDmg: 15, hpScale: 2.6 }
+  };
+
+  const ENEMIES = [
+    { emoji: "🐛", name: "小 Bug 蟲",     hp: 60,  dmgScale: 1.0, line: "嘰嘰！我會讓你的程式跑不動！" },
+    { emoji: "👻", name: "Typo 幽靈",     hp: 90,  dmgScale: 1.1, line: "嘿嘿～你一定會打錯字的～" },
+    { emoji: "🐲", name: "Deadline 龍王", hp: 140, dmgScale: 1.3, boss: true, line: "吼！截止時間就要到了！" }
+  ];
+
+  // ============ 勇者角色（手繪 SVG） ============
+  const INK = "#4a3550";
+  const AVATARS = {
+    cat:   { name: "喵喵", sub: "橘貓・愛睡覺", main: "#ffb86b", dark: "#e8893a", inner: "#ffc9d6", scarf: "#ff8fab" },
+    shiba: { name: "柴柴", sub: "柴犬・很會笑", main: "#f6a55b", light: "#fff4e6", inner: "#fff4e6", scarf: "#6fd6b0" },
+    bunny: { name: "兔兔", sub: "白兔・跳很快", main: "#ffffff", inner: "#ffc9d6", scarf: "#b79ced" },
+    panda: { name: "熊熊", sub: "熊貓・吃竹子", main: "#ffffff", dark: INK, scarf: "#ffd166" }
+  };
+
+  function avatarSVG(kind, extraClass = "") {
+    const a = AVATARS[kind] || AVATARS.cat;
+    const S4 = `stroke="${INK}" stroke-width="4" stroke-linejoin="round"`;
+    const limb = kind === "panda" ? INK : a.main;
+    const eye = kind === "panda" ? "#ffffff" : INK;
+    const glint = kind === "panda" ? INK : "#ffffff";
+    let ears = "", marks = "", belly = "";
+
+    if (kind === "cat") {
+      ears = `<path d="M28 44 L31 9 L57 27 Z" fill="${a.main}" ${S4}/><path d="M92 44 L89 9 L63 27 Z" fill="${a.main}" ${S4}/>
+        <path d="M35 33 L36 19 L47 27 Z" fill="${a.inner}"/><path d="M85 33 L84 19 L73 27 Z" fill="${a.inner}"/>`;
+      marks = `<path d="M60 27 v9 M50 29 l2.5 7 M70 29 l-2.5 7" stroke="${a.dark}" stroke-width="4.5" stroke-linecap="round"/>
+        <path d="M29 63 L14 60 M29 69 L14 71 M91 63 L106 60 M91 69 L106 71" stroke="${INK}" stroke-width="2.5" stroke-linecap="round"/>`;
+      belly = `<ellipse cx="60" cy="101" rx="13" ry="9" fill="#fff4e6"/>`;
+    } else if (kind === "shiba") {
+      ears = `<path d="M27 46 Q25 12 36 10 Q50 16 58 28 Z" fill="${a.main}" ${S4}/><path d="M93 46 Q95 12 84 10 Q70 16 62 28 Z" fill="${a.main}" ${S4}/>
+        <path d="M35 34 Q34 21 39 19 Q46 23 49 28 Z" fill="${a.inner}"/><path d="M85 34 Q86 21 81 19 Q74 23 71 28 Z" fill="${a.inner}"/>`;
+      marks = `<ellipse cx="60" cy="72" rx="25" ry="14" fill="${a.light}"/>
+        <circle cx="46" cy="44" r="3.5" fill="${a.light}"/><circle cx="74" cy="44" r="3.5" fill="${a.light}"/>`;
+      belly = `<ellipse cx="60" cy="101" rx="14" ry="10" fill="${a.light}"/>`;
+    } else if (kind === "bunny") {
+      ears = `<g transform="rotate(-12 45 24)"><ellipse cx="45" cy="18" rx="10.5" ry="25" fill="${a.main}" ${S4}/><ellipse cx="45" cy="20" rx="4.5" ry="16" fill="${a.inner}"/></g>
+        <g transform="rotate(14 75 24)"><ellipse cx="75" cy="18" rx="10.5" ry="25" fill="${a.main}" ${S4}/><ellipse cx="75" cy="20" rx="4.5" ry="16" fill="${a.inner}"/></g>`;
+      marks = `<path d="M54 40 q6 -5 12 0" stroke="${a.inner}" stroke-width="4" fill="none" stroke-linecap="round"/>`;
+      belly = `<ellipse cx="60" cy="101" rx="13" ry="9" fill="#fdf0f6"/>`;
+    } else if (kind === "panda") {
+      ears = `<circle cx="30" cy="32" r="12" fill="${INK}"/><circle cx="90" cy="32" r="12" fill="${INK}"/>`;
+      marks = `<ellipse cx="45" cy="57" rx="9.5" ry="11.5" transform="rotate(22 45 57)" fill="${INK}"/>
+        <ellipse cx="75" cy="57" rx="9.5" ry="11.5" transform="rotate(-22 75 57)" fill="${INK}"/>`;
+    }
+
+    return `<svg class="av ${extraClass}" viewBox="0 0 120 124" aria-hidden="true">
+      <ellipse cx="60" cy="119" rx="30" ry="4.5" fill="${INK}" opacity=".15"/>
+      <ellipse cx="47" cy="112" rx="9.5" ry="6" fill="${limb}" ${S4}/>
+      <ellipse cx="73" cy="112" rx="9.5" ry="6" fill="${limb}" ${S4}/>
+      <ellipse cx="60" cy="97" rx="25" ry="17" fill="${a.main}" ${S4}/>
+      ${belly}
+      <ellipse cx="36" cy="97" rx="7.5" ry="9.5" transform="rotate(20 36 97)" fill="${limb}" ${S4}/>
+      <ellipse cx="84" cy="97" rx="7.5" ry="9.5" transform="rotate(-20 84 97)" fill="${limb}" ${S4}/>
+      ${ears}
+      <ellipse cx="60" cy="56" rx="38" ry="30" fill="${a.main}" ${S4}/>
+      ${marks}
+      <path d="M38 83 Q60 93 82 83 L83 89 Q60 99 37 89 Z" fill="${a.scarf}" ${S4} stroke-width="3"/>
+      <path d="M72 91 L80 105 L69 102 Z" fill="${a.scarf}" ${S4} stroke-width="3"/>
+      <ellipse cx="33" cy="70" rx="6.5" ry="4" fill="#ff9fb5" opacity=".8"/>
+      <ellipse cx="87" cy="70" rx="6.5" ry="4" fill="#ff9fb5" opacity=".8"/>
+      <ellipse cx="60" cy="64" rx="3.6" ry="2.6" fill="${INK}"/>
+      <g class="f-normal">
+        <ellipse cx="45" cy="57" rx="4.6" ry="5.8" fill="${eye}"/><ellipse cx="75" cy="57" rx="4.6" ry="5.8" fill="${eye}"/>
+        <circle cx="46.6" cy="54.6" r="1.8" fill="${glint}"/><circle cx="76.6" cy="54.6" r="1.8" fill="${glint}"/>
+        <path d="M53 68 Q56.5 73 60 68 Q63.5 73 67 68" stroke="${INK}" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      </g>
+      <g class="f-happy">
+        <path d="M39.5 59 Q45 51 50.5 59 M69.5 59 Q75 51 80.5 59" stroke="${eye}" stroke-width="4" fill="none" stroke-linecap="round"/>
+        <path d="M53 68 Q60 79 67 68 Z" fill="#ff7a93" stroke="${INK}" stroke-width="3" stroke-linejoin="round"/>
+      </g>
+      <g class="f-hurt">
+        <path d="M40 52 L49.5 57 L40 62 M80 52 L70.5 57 L80 62" stroke="${eye}" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        <ellipse cx="60" cy="72" rx="4" ry="4.8" fill="${INK}"/>
+      </g>
+      <g class="f-ko">
+        <path d="M40.5 52.5 L49.5 61.5 M49.5 52.5 L40.5 61.5 M70.5 52.5 L79.5 61.5 M79.5 52.5 L70.5 61.5" stroke="${eye}" stroke-width="4" stroke-linecap="round"/>
+        <path d="M53 72 Q56.5 68 60 72 Q63.5 76 67 72" stroke="${INK}" stroke-width="3" fill="none" stroke-linecap="round"/>
+      </g>
+    </svg>`;
+  }
+
+  const PLAYER_MAX = 100;
+  const STAGE_HEAL = 20;
+  const DMG_PER_CHAR = 3;
+  const PUSHBACK = 0.15;      // 打完一個字，怪物蓄力倒退 15%
+  const MISS_PENALTY = 0.08;  // 打錯一次，怪物蓄力 +8%
+  const STORE_KEY = "typingPaws.v1";
+
+  // ============ 工具 ============
+  const $ = (id) => document.getElementById(id);
+  const rand = (arr) => arr[Math.floor(Math.random() * arr.length)];
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  const multOf = (combo) => Math.min(3, 1 + Math.floor(combo / 10) * 0.5);
+  const esc = (s) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+  // ============ 紀錄 (localStorage) ============
+  function loadStore() {
+    try {
+      const raw = localStorage.getItem(STORE_KEY);
+      const data = raw ? JSON.parse(raw) : null;
+      if (data && data.best && Array.isArray(data.history)) return data;
+    } catch (e) { /* 瀏覽器不允許儲存時就用空紀錄 */ }
+    return { best: {}, history: [] };
+  }
+  function saveStore(data) {
+    try { localStorage.setItem(STORE_KEY, JSON.stringify(data)); } catch (e) {}
+  }
+  let store = loadStore();
+  const curAvatar = () => (AVATARS[store.avatar] ? store.avatar : "cat");
+  const heroName = () => AVATARS[curAvatar()].name;
+
+  // ============ 遊戲狀態 ============
+  let S = null;
+  let rafId = 0;
+
+  function newGame(diff) {
+    S = {
+      diff, stage: 0,
+      playerHp: PLAYER_MAX,
+      enemyHp: 0, enemyMax: 0,
+      charge: 0,
+      word: "", idx: 0, queue: [], recent: [],
+      combo: 0, maxCombo: 0,
+      correct: 0, typed: 0, wrong: 0, words: 0,
+      score: 0, damage: 0,
+      activeMs: 0,
+      running: false, paused: false, over: false,
+      lastTs: 0, errFlash: false
+    };
+  }
+
+  function pickWord() {
+    const list = WORDS[S.diff];
+    let w, tries = 0;
+    do { w = rand(list); tries++; } while (S.recent.includes(w) && tries < 20);
+    S.recent.push(w);
+    if (S.recent.length > 8) S.recent.shift();
+    return w;
+  }
+
+  function nextWord() {
+    while (S.queue.length < 3) S.queue.push(pickWord());
+    S.word = S.queue.shift();
+    S.queue.push(pickWord());
+    S.idx = 0;
+    renderWord();
+  }
+
+  function setupStage() {
+    const e = ENEMIES[S.stage];
+    S.enemyMax = Math.round(e.hp * DIFF[S.diff].hpScale);
+    S.enemyHp = S.enemyMax;
+    S.charge = 0;
+    const sp = $("eSprite");
+    sp.textContent = e.emoji;
+    sp.className = "sprite enemy idle" + (e.boss ? " boss" : "");
+    $("eName").textContent = e.name;
+    $("stagePill").textContent = `第 ${S.stage + 1} / 3 關 ・ ${DIFF[S.diff].label}`;
+    renderHud();
+  }
+
+  // ============ 畫面渲染 ============
+  function show(id) {
+    document.querySelectorAll(".screen").forEach((s) => s.classList.toggle("active", s.id === id));
+    window.scrollTo({ top: 0 });
+  }
+
+  function renderWord() {
+    const html = [...S.word].map((c, i) => {
+      let cls = i < S.idx ? "done" : i === S.idx ? "cur" : "todo";
+      if (i === S.idx && S.errFlash) cls += " err";
+      if (c === " ") cls += " space";
+      return `<span class="ch ${cls}">${c === " " ? "" : esc(c)}</span>`;
+    }).join("");
+    $("word").innerHTML = html;
+    $("nextWords").innerHTML = "<span style='border:none;background:none;padding:0'>下一個 →</span>" +
+      S.queue.slice(0, 2).map((w) => `<span>${esc(w)}</span>`).join("");
+  }
+
+  function renderHud() {
+    $("pHp").style.width = (S.playerHp / PLAYER_MAX * 100) + "%";
+    $("pHpTxt").textContent = `${Math.max(0, Math.ceil(S.playerHp))}/${PLAYER_MAX}`;
+    $("eHp").style.width = (S.enemyHp / S.enemyMax * 100) + "%";
+    $("eHpTxt").textContent = `${Math.max(0, S.enemyHp)}/${S.enemyMax}`;
+    $("comboNum").textContent = S.combo;
+    const m = multOf(S.combo);
+    const tag = $("multTag");
+    tag.textContent = "×" + m.toFixed(1);
+    tag.className = "mult" + (m >= 2 ? " fire" : m > 1 ? " hot" : "");
+    $("tScore").textContent = S.score;
+    renderCharge();
+  }
+
+  function renderCharge() {
+    const pct = clamp(S.charge, 0, 1) * 100;
+    $("eCharge").style.width = pct + "%";
+    $("chargeTxt").textContent = Math.floor(pct) + "%";
+    $("chargeBar").classList.toggle("danger", pct > 75);
+  }
+
+  function liveStats() {
+    const min = S.activeMs / 60000;
+    const wpm = min > 0 ? Math.round((S.correct / 5) / min) : 0;
+    const acc = S.typed > 0 ? Math.round(S.correct / S.typed * 1000) / 10 : 100;
+    return { wpm, acc, secs: S.activeMs / 1000 };
+  }
+
+  function renderStats() {
+    const st = liveStats();
+    $("tTime").textContent = st.secs.toFixed(1) + "s";
+    $("tWpm").textContent = st.wpm;
+    $("tAcc").textContent = st.acc + "%";
+  }
+
+  function retrigger(el, cls) {
+    el.classList.remove(cls);
+    void el.offsetWidth;
+    el.classList.add(cls);
+  }
+
+  function animSprite(el, cls, ms, back = "idle") {
+    const base = el.id === "pSprite" ? "sprite player "
+      : "sprite enemy " + (S && ENEMIES[S.stage].boss ? "boss " : "");
+    el.className = base + cls;
+    clearTimeout(el._t);
+    el._t = setTimeout(() => { if (!el.classList.contains("ko")) el.className = base + back; }, ms);
+  }
+
+  function floatText(targetEl, text, cls) {
+    const arena = $("arena");
+    const a = arena.getBoundingClientRect();
+    const r = targetEl.getBoundingClientRect();
+    const d = document.createElement("div");
+    d.className = "float " + (cls || "");
+    d.textContent = text;
+    d.style.left = (r.left - a.left + r.width / 2 + (Math.random() * 30 - 15)) + "px";
+    d.style.top = (r.top - a.top + 4) + "px";
+    arena.appendChild(d);
+    setTimeout(() => d.remove(), 1000);
+  }
+
+  function burst(targetEl, emojis, n) {
+    const arena = $("arena");
+    const a = arena.getBoundingClientRect();
+    const r = targetEl.getBoundingClientRect();
+    for (let i = 0; i < n; i++) {
+      const p = document.createElement("div");
+      p.className = "particle";
+      p.textContent = rand(emojis);
+      p.style.left = (r.left - a.left + r.width / 2) + "px";
+      p.style.top = (r.top - a.top + r.height / 2) + "px";
+      const ang = Math.random() * Math.PI * 2, dist = 50 + Math.random() * 70;
+      p.style.setProperty("--dx", Math.cos(ang) * dist + "px");
+      p.style.setProperty("--dy", Math.sin(ang) * dist - 20 + "px");
+      arena.appendChild(p);
+      setTimeout(() => p.remove(), 800);
+    }
+  }
+
+  // ============ 戰鬥邏輯 ============
+  function handleChar(ch) {
+    if (!S || !S.running || S.paused || S.over) return;
+    S.typed++;
+    const expected = S.word[S.idx];
+    if (ch === expected) {
+      S.correct++;
+      S.idx++;
+      S.combo++;
+      S.errFlash = false;
+      if (S.combo > S.maxCombo) S.maxCombo = S.combo;
+      if (S.combo % 10 === 0) {
+        retrigger($("comboNum"), "bump");
+        floatText($("comboNum"), `${S.combo} COMBO!`, "crit");
+      }
+      if (S.idx >= S.word.length) wordComplete();
+      else renderWord();
+    } else {
+      S.wrong++;
+      if (S.combo >= 10) floatText($("comboNum"), "Combo 中斷…", "ouch");
+      S.combo = 0;
+      S.charge = Math.min(1, S.charge + MISS_PENALTY);
+      S.errFlash = true;
+      renderWord();
+      retrigger($("word"), "shake");
+    }
+    renderHud();
+  }
+
+  function wordComplete() {
+    const m = multOf(S.combo);
+    const dmg = Math.round(S.word.length * DMG_PER_CHAR * m);
+    const crit = m >= 2;
+    S.enemyHp = Math.max(0, S.enemyHp - dmg);
+    S.damage += dmg;
+    S.score += dmg * 10;
+    S.words++;
+    S.charge = Math.max(0, S.charge - PUSHBACK);
+
+    const pS = $("pSprite"), eS = $("eSprite");
+    animSprite(pS, "attack-r", 350);
+    setTimeout(() => {
+      animSprite(eS, "hit", 400);
+      floatText(eS, (crit ? "CRIT! " : "-") + dmg, crit ? "crit" : "");
+      burst(eS, crit ? ["⭐", "✨", "💥", "🌟"] : ["✨", "💖", "⭐"], crit ? 12 : 7);
+    }, 120);
+
+    if (S.enemyHp <= 0) {
+      enemyDefeated();
+    } else {
+      nextWord();
+    }
+  }
+
+  function enemyAttack() {
+    const e = ENEMIES[S.stage];
+    const dmg = Math.round(DIFF[S.diff].enemyDmg * e.dmgScale);
+    S.charge = 0;
+    S.playerHp = Math.max(0, S.playerHp - dmg);
+    const lostCombo = S.combo;
+    S.combo = 0;
+    const eS = $("eSprite"), pS = $("pSprite");
+    animSprite(eS, "attack-l", 400);
+    setTimeout(() => {
+      animSprite(pS, "hit", 400);
+      floatText(pS, "-" + dmg, "ouch");
+      burst(pS, ["💢", "💫"], 5);
+      retrigger($("arena"), "shake");
+      if (lostCombo >= 10) floatText($("comboNum"), "Combo 被打斷！", "ouch");
+    }, 150);
+    renderHud();
+    if (S.playerHp <= 0) {
+      S.over = true;
+      S.running = false;
+      setTimeout(() => { clearTimeout(pS._t); pS.className = "sprite player ko"; }, 450);
+      setTimeout(() => finish(false), 1300);
+    }
+  }
+
+  function enemyDefeated() {
+    S.running = false;
+    const eS = $("eSprite");
+    eS.className = "sprite enemy ko";
+    burst(eS, ["🎉", "⭐", "✨", "🌸"], 16);
+    const bonus = 300 * (S.stage + 1) + Math.round(S.playerHp) * 5;
+    S.score += bonus;
+    renderHud();
+
+    if (S.stage >= ENEMIES.length - 1) {
+      S.over = true;
+      setTimeout(() => finish(true), 1100);
+      return;
+    }
+    const healed = Math.min(STAGE_HEAL, PLAYER_MAX - S.playerHp);
+    setTimeout(() => {
+      const next = ENEMIES[S.stage + 1];
+      showMsg({
+        emoji: "🎉", title: `第 ${S.stage + 1} 關 CLEAR！`,
+        text: `過關獎勵 +${bonus} 分${healed > 0 ? `，${heroName()}恢復 ${Math.round(healed)} HP` : ""}。\n下一個對手：${next.emoji} ${next.name}\n「${next.line}」`,
+        buttons: [{ label: "⚔️ 繼續戰鬥（Enter）", primary: true, onClick: () => {
+          hideMsg();
+          S.stage++;
+          S.playerHp = Math.min(PLAYER_MAX, S.playerHp + STAGE_HEAL);
+          setupStage();
+          nextWord();
+          countdown(() => { S.running = true; });
+        } }]
+      });
+    }, 900);
+  }
+
+  function loop(ts) {
+    rafId = requestAnimationFrame(loop);
+    if (!S) return;
+    const dt = S.lastTs ? Math.min(100, ts - S.lastTs) : 0;
+    S.lastTs = ts;
+    if (!S.running || S.paused || S.over) return;
+    S.activeMs += dt;
+    S.charge += dt / DIFF[S.diff].interval;
+    if (S.charge >= 1) enemyAttack();
+    renderCharge();
+    renderStats();
+  }
+
+  // ============ 流程控制 ============
+  function startGame(diff) {
+    newGame(diff);
+    show("screen-battle");
+    const ps = $("pSprite");
+    ps.className = "sprite player idle";
+    ps.innerHTML = avatarSVG(curAvatar());
+    $("pName").textContent = `🐾 ${heroName()}勇者`;
+    $("imeWarn").classList.remove("show");
+    setupStage();
+    nextWord();
+    renderStats();
+    focusInput();
+    const e = ENEMIES[0];
+    showMsg({
+      emoji: e.emoji, title: `${e.name} 出現了！`,
+      text: `「${e.line}」\n把字打完就能攻擊，小心黃色蓄力條！\n⌨️ 記得先切換成「英文」輸入法喔`,
+      buttons: [{ label: "⚔️ 開打！（Enter）", primary: true, onClick: () => { hideMsg(); countdown(() => { S.running = true; }); } }]
+    });
+  }
+
+  function countdown(done) {
+    const ov = $("countOverlay"), t = $("countText");
+    ov.classList.add("show");
+    let n = 3;
+    const step = () => {
+      t.textContent = n > 0 ? n : "GO!";
+      retrigger(t, "big-count");
+      if (n < 0) { ov.classList.remove("show"); focusInput(); done(); return; }
+      n--;
+      setTimeout(step, n < 0 ? 500 : 650);
+    };
+    step();
+  }
+
+  function togglePause() {
+    if (!S || S.over || !S.running) return;
+    S.paused = !S.paused;
+    if (S.paused) {
+      showMsg({
+        emoji: "⏸", title: "暫停中", text: "喘口氣，準備好再繼續！",
+        buttons: [
+          { label: "▶ 繼續（Esc）", primary: true, onClick: togglePause },
+          { label: "🏳 放棄回選單", onClick: () => { hideMsg(); S.over = true; S.running = false; goMenu(); } }
+        ]
+      });
+    } else {
+      hideMsg();
+      focusInput();
+    }
+  }
+
+  function finish(win) {
+    S.running = false;
+    S.over = true;
+    const st = liveStats();
+    let stars = 0;
+    if (win) stars = (st.acc >= 95 && S.playerHp >= 50) ? 3 : st.acc >= 85 ? 2 : 1;
+
+    // 存紀錄
+    const prev = store.best[S.diff] || { score: 0, wpm: 0, combo: 0, acc: 0, clears: 0 };
+    const isNew = S.score > prev.score;
+    const isWpmNew = win && st.wpm > prev.wpm;
+    store.best[S.diff] = {
+      score: Math.max(prev.score, S.score),
+      wpm: win ? Math.max(prev.wpm, st.wpm) : prev.wpm,
+      combo: Math.max(prev.combo, S.maxCombo),
+      acc: win ? Math.max(prev.acc, st.acc) : prev.acc,
+      clears: prev.clears + (win ? 1 : 0)
+    };
+    store.history.push({
+      t: Date.now(), diff: S.diff, win, wpm: st.wpm, acc: st.acc,
+      combo: S.maxCombo, score: S.score, stage: S.stage + 1
+    });
+    if (store.history.length > 30) store.history = store.history.slice(-30);
+    saveStore(store);
+
+    // 畫面
+    $("rEmoji").innerHTML = avatarSVG(curAvatar(), win ? "happy" : "sad");
+    $("rTitle").textContent = win ? "🏆 通關成功！" : `${heroName()}被打倒了…`;
+    $("rSub").textContent = win
+      ? `${DIFF[S.diff].label}模式 ・ 打倒了 Deadline 龍王！`
+      : `${DIFF[S.diff].label}模式 ・ 止步於第 ${S.stage + 1} 關（${ENEMIES[S.stage].name}）`;
+    $("rStars").innerHTML = [0, 1, 2].map((i) =>
+      `<span class="${i < stars ? "" : "off"}" style="animation-delay:${0.15 * i + 0.1}s">⭐</span>`).join("");
+    $("rRecord").innerHTML = (isNew || isWpmNew) && S.score > 0
+      ? `<span class="new-record">✨ 新紀錄！${isWpmNew ? "最快 WPM" : "最高分"} ✨</span>` : "";
+    const stats = [
+      ["WPM", st.wpm], ["準確率", st.acc + "%"], ["最高 Combo", S.maxCombo],
+      ["分數", S.score], ["總傷害", S.damage], ["用時", st.secs.toFixed(1) + "s"]
+    ];
+    $("rStats").innerHTML = stats.map(([k, v]) => `<div class="stat"><div class="v">${v}</div><div class="k">${k}</div></div>`).join("");
+    $("rComment").textContent = comment(win, st, S.maxCombo);
+    show("screen-result");
+  }
+
+  function comment(win, st, combo) {
+    if (!win && st.acc < 85) return "🐾 打錯字會讓怪物蓄力變快，先求穩再求快，準確率拉到 90% 以上會輕鬆很多喔！";
+    if (!win) return "🐾 差一點點！記得打完一個字可以把怪物蓄力推回去，連續打字不要停下來。";
+    if (st.wpm >= 70) return "🚀 手速驚人！你已經是鍵盤上的忍者喵了，試試更高難度吧！";
+    if (combo >= 40) return "🔥 Combo 大師！維持三倍傷害的感覺很爽對吧～";
+    if (st.acc >= 97) return "🎯 幾乎零失誤！穩定度滿分，接下來可以試著再快一點。";
+    return "🌟 順利通關！多玩幾次，看看你的 WPM 走勢會不會一路往上～";
+  }
+
+  function goMenu() {
+    renderMenu();
+    show("screen-start");
+  }
+
+  // ============ 訊息視窗 ============
+  let msgPrimary = null;
+  function showMsg({ emoji, title, text, buttons }) {
+    $("msgEmoji").textContent = emoji;
+    $("msgTitle").textContent = title;
+    $("msgText").innerHTML = esc(text).replace(/\n/g, "<br>");
+    const box = $("msgBtns");
+    box.innerHTML = "";
+    msgPrimary = null;
+    buttons.forEach((b) => {
+      const el = document.createElement("button");
+      el.className = "btn" + (b.primary ? "" : " ghost");
+      el.textContent = b.label;
+      el.onclick = b.onClick;
+      if (b.primary) msgPrimary = b.onClick;
+      box.appendChild(el);
+    });
+    $("msgOverlay").classList.add("show");
+  }
+  function hideMsg() { $("msgOverlay").classList.remove("show"); msgPrimary = null; }
+  const msgOpen = () => $("msgOverlay").classList.contains("show");
+
+  // ============ 選單 / 戰績 ============
+  function renderAvatars() {
+    const cur = curAvatar();
+    $("heroMascot").innerHTML = avatarSVG(cur);
+    $("avatarGrid").innerHTML = Object.entries(AVATARS).map(([k, a]) =>
+      `<button class="av-card ${k === cur ? "selected" : ""}" data-av="${k}" aria-pressed="${k === cur}">
+        ${avatarSVG(k)}<div class="nm">${a.name}勇者</div><div class="sub">${a.sub}</div></button>`).join("");
+    $("avatarGrid").querySelectorAll(".av-card").forEach((el) => el.addEventListener("click", () => {
+      store.avatar = el.dataset.av;
+      saveStore(store);
+      renderAvatars();
+    }));
+  }
+
+  function renderMenu() {
+    renderAvatars();
+    $("diffGrid").innerHTML = Object.entries(DIFF).map(([k, d]) => {
+      const b = store.best[k];
+      const best = b && (b.score > 0)
+        ? `🏅 最高分 ${b.score} ・ ${b.clears > 0 ? `最快 ${b.wpm} WPM` : "尚未通關"}<br>🔥 最高 Combo ${b.combo} ・ 通關 ${b.clears} 次`
+        : "還沒有紀錄，來當第一次挑戰吧！";
+      return `<button class="diff-card" data-diff="${k}">
+        <div class="icon">${d.icon}</div><div class="name">${d.label}</div>
+        <div class="desc">${d.desc}</div><div class="best">${best}</div></button>`;
+    }).join("");
+    $("diffGrid").querySelectorAll(".diff-card").forEach((el) =>
+      el.addEventListener("click", () => startGame(el.dataset.diff)));
+
+    const hist = store.history;
+    if (!hist.length) {
+      $("histTable").innerHTML = `<div class="empty">還沒有戰績 🐾<br>完成一場戰鬥後會出現在這裡</div>`;
+    } else {
+      const rows = hist.slice(-6).reverse().map((h) => {
+        const d = new Date(h.t);
+        const when = `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+        return `<tr><td>${when}</td><td><span class="tag ${h.diff}">${DIFF[h.diff].label}</span></td>
+          <td>${h.win ? "🏆" : "💀 " + h.stage + "關"}</td><td><b>${h.wpm}</b></td><td>${h.acc}%</td></tr>`;
+      }).join("");
+      $("histTable").innerHTML = `<table class="hist"><thead><tr><th>時間</th><th>難度</th><th>結果</th><th>WPM</th><th>準確</th></tr></thead><tbody>${rows}</tbody></table>`;
+    }
+    renderSpark();
+  }
+
+  function renderSpark() {
+    const data = store.history.slice(-10);
+    if (data.length < 2) {
+      $("spark").innerHTML = `<div class="empty">玩 2 場以上就會畫出你的進步曲線 📈</div>`;
+      $("sparkMeta").textContent = "";
+      return;
+    }
+    const W = 400, H = 130, P = 18;
+    const vals = data.map((d) => d.wpm);
+    const max = Math.max(10, ...vals) * 1.15, min = 0;
+    const x = (i) => P + i * (W - 2 * P) / (data.length - 1);
+    const y = (v) => H - P - (v - min) / (max - min) * (H - 2 * P);
+    const pts = vals.map((v, i) => `${x(i)},${y(v)}`).join(" ");
+    const area = `${x(0)},${H - P} ${pts} ${x(data.length - 1)},${H - P}`;
+    const dots = data.map((d, i) =>
+      `<circle cx="${x(i)}" cy="${y(d.wpm)}" r="6" fill="${d.win ? "#6fd6b0" : "#ff8fab"}" stroke="#4a3550" stroke-width="2.5"><title>${d.wpm} WPM (${DIFF[d.diff].label}${d.win ? "・通關" : ""})</title></circle>`).join("");
+    const last = vals[vals.length - 1];
+    const labels = `<text x="${x(data.length - 1)}" y="${y(last) - 12}" text-anchor="end" font-size="13" font-weight="700" fill="#4a3550">${last}</text>`;
+    $("spark").innerHTML = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="WPM 走勢">
+      <line x1="${P}" y1="${H - P}" x2="${W - P}" y2="${H - P}" stroke="#e8d8e0" stroke-width="2"/>
+      <polygon points="${area}" fill="#ffd9e3" opacity=".7"/>
+      <polyline points="${pts}" fill="none" stroke="#4a3550" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+      ${dots}${labels}</svg>`;
+    const best = Math.max(...vals);
+    $("sparkMeta").textContent = `最高 ${best} ・ 綠點＝通關`;
+  }
+
+  // ============ 輸入處理 ============
+  const input = $("hiddenInput");
+  function focusInput() {
+    try { input.focus({ preventScroll: true }); } catch (e) { input.focus(); }
+  }
+  const battleActive = () => $("screen-battle").classList.contains("active");
+
+  // ---- 輸入法（IME）防呆 ----
+  // 全形英數（例如注音的全形模式）自動轉成半形，其他非英文字元視為「切到中文輸入法」
+  const toHalfWidth = (ch) => {
+    const c = ch.charCodeAt(0);
+    if (c >= 0xFF01 && c <= 0xFF5E) return String.fromCharCode(c - 0xFEE0);
+    if (c === 0x3000) return " ";
+    return ch;
+  };
+  const isTypeable = (ch) => /^[\x20-\x7E]$/.test(ch);
+  let warnTimer = 0, imeNoticeAt = 0;
+
+  function showWarn(html, ms = 4000) {
+    const w = $("imeWarn");
+    w.innerHTML = html;
+    w.classList.add("show");
+    clearTimeout(warnTimer);
+    warnTimer = setTimeout(() => w.classList.remove("show"), ms);
+  }
+
+  function imeDetected() {
+    if (!battleActive() || !S || S.over) return;
+    input.value = "";
+    showWarn("⚠️ 偵測到中文輸入法！請按 <kbd>Shift</kbd> 切回英文（Mac 可按 <kbd>Caps Lock</kbd> 或 <kbd>Ctrl</kbd>+<kbd>Space</kbd>）", 6000);
+    const now = Date.now();
+    if (now - imeNoticeAt < 1500) return;
+    imeNoticeAt = now;
+    if (S.running && !S.paused && !msgOpen()) {
+      S.paused = true;   // 先暫停，避免切輸入法的時候被怪物打
+      showMsg({
+        emoji: "⌨️", title: "好像切到中文輸入法了",
+        text: "遊戲先幫你暫停 ⏸\n請按 Shift 切回英文輸入（Mac 可按 Caps Lock 或 Ctrl+Space），\n切好之後再按繼續。",
+        buttons: [{ label: "▶ 切好了，繼續", primary: true, onClick: () => { S.paused = false; hideMsg(); $("imeWarn").classList.remove("show"); focusInput(); } }]
+      });
+    }
+  }
+
+  function typeChar(raw) {
+    const ch = toHalfWidth(raw);
+    if (isTypeable(ch)) handleChar(ch);
+    else imeDetected();
+  }
+
+  document.addEventListener("keydown", (e) => {
+    if (e.isComposing || e.key === "Process") {   // 輸入法正在組字
+      if (battleActive()) imeDetected();
+      return;
+    }
+    if (msgOpen() && e.key === "Enter" && msgPrimary) { e.preventDefault(); msgPrimary(); return; }
+    if (!battleActive()) return;
+    if (e.key === "Escape") { e.preventDefault(); togglePause(); return; }
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    if (e.key.length === 1) {
+      e.preventDefault();   // 避免空白鍵捲動頁面，也避免手機 input 事件重複觸發
+      if (/[a-z]/i.test(e.key) && e.getModifierState && e.getModifierState("CapsLock") && S && S.running) {
+        showWarn("🔠 Caps Lock 開著喔！字母會變成大寫，可能一直打錯", 3000);
+      }
+      typeChar(e.key);
+    }
+  });
+  // 手機虛擬鍵盤常常只送出 input 事件（keydown 的 key 是 Unidentified）
+  input.addEventListener("input", (e) => {
+    if (e.isComposing) return;      // 組字中先不處理，等 compositionend
+    const v = input.value;
+    input.value = "";
+    for (const ch of v) typeChar(ch);
+  });
+  input.addEventListener("compositionstart", () => imeDetected());
+  input.addEventListener("compositionend", () => { input.value = ""; });
+  input.addEventListener("blur", () => { if (battleActive() && S && !S.over) $("focusWarn").classList.add("show"); });
+  input.addEventListener("focus", () => $("focusWarn").classList.remove("show"));
+  $("wordPanel").addEventListener("click", focusInput);
+  $("arena").addEventListener("click", focusInput);
+
+  $("pauseBtn").addEventListener("click", togglePause);
+  $("retryBtn").addEventListener("click", () => startGame(S.diff));
+  $("menuBtn").addEventListener("click", goMenu);
+  $("clearBtn").addEventListener("click", () => {
+    if (!store.history.length && !Object.keys(store.best).length) return;
+    if (confirm("確定要清除所有最佳紀錄與歷史戰績嗎？")) {
+      store = { best: {}, history: [], avatar: store.avatar };
+      saveStore(store);
+      renderMenu();
+    }
+  });
+  // 切到別的分頁時自動暫停
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden && S && S.running && !S.paused && !S.over) togglePause();
+  });
+
+  renderMenu();
+  rafId = requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
